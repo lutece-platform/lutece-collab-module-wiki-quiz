@@ -36,6 +36,8 @@ package fr.paris.lutece.plugins.wiki.modules.quiz.business;
 import fr.paris.lutece.portal.service.plugin.Plugin;
 import fr.paris.lutece.util.sql.DAOUtil;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +46,8 @@ import java.util.Optional;
 /**
  * Implementation of quiz response data access object.
  */
-public final class QuizResponseDAO implements IQuizResponseDAO
+@ApplicationScoped
+public class QuizResponseDAO implements IQuizResponseDAO
 {
     private static final String SQL_QUERY_INSERT = "INSERT INTO wiki_quiz_response ( id_attempt, id_question, user_answer, is_correct, points_earned ) VALUES ( ?, ?, ?, ?, ? )";
     private static final String SQL_QUERY_UPDATE = "UPDATE wiki_quiz_response SET id_attempt = ?, id_question = ?, user_answer = ?, is_correct = ?, points_earned = ? WHERE id_response = ?";

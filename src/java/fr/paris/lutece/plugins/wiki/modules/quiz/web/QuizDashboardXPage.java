@@ -48,12 +48,16 @@ import fr.paris.lutece.portal.service.security.UserNotSignedException;
 import fr.paris.lutece.portal.service.util.AppPropertiesService;
 import fr.paris.lutece.portal.util.mvc.commons.annotations.View;
 import fr.paris.lutece.portal.util.mvc.xpage.annotations.Controller;
+import fr.paris.lutece.portal.web.cdi.mvc.Models;
 import fr.paris.lutece.portal.web.util.LocalizedPaginator;
 import fr.paris.lutece.portal.web.xpages.XPage;
 import fr.paris.lutece.util.html.AbstractPaginator;
 import fr.paris.lutece.util.url.UrlItem;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,10 +67,15 @@ import java.util.stream.Collectors;
 /**
  * XPage controller for the quiz dashboard. Provides views for displaying quiz statistics and managing quiz attempts.
  */
+@SessionScoped
+@Named( "wiki-quiz.xpage.quizdashboard" )
 @Controller( xpageName = "quizdashboard", pageTitleI18nKey = "module.wiki.quiz.xpage.quizDashboard.pageTitle", pagePathI18nKey = "module.wiki.quiz.xpage.quizDashboard.pageTitle" )
 public class QuizDashboardXPage extends AbstractWikiXPage
 {
     private static final long serialVersionUID = 1L;
+
+    @Inject
+    private Models _models;
 
     // Views
     private static final String VIEW_DASHBOARD = "dashboard";
@@ -134,7 +143,7 @@ public class QuizDashboardXPage extends AbstractWikiXPage
         if ( strBookId == null || strBookId.isEmpty( ) )
         {
             addError( I18N_ERROR_BOOK_REQUIRED, getLocale( request ) );
-            return getXPage( TEMPLATE_DASHBOARD, getLocale( request ), getModel( ) );
+            return getXPage( TEMPLATE_DASHBOARD, getLocale( request ) );
         }
 
         int nBookId = Integer.parseInt( strBookId );
@@ -143,7 +152,7 @@ public class QuizDashboardXPage extends AbstractWikiXPage
         if ( optBook.isEmpty( ) || !( optBook.get( ) instanceof Book ) || !WikiAccessControlService.canEdit( user, optBook.get( ) ) )
         {
             addError( I18N_ERROR_ACCESS_DENIED, getLocale( request ) );
-            return getXPage( TEMPLATE_DASHBOARD, getLocale( request ), getModel( ) );
+            return getXPage( TEMPLATE_DASHBOARD, getLocale( request ) );
         }
 
         Book book = (Book) optBook.get( );
@@ -173,13 +182,12 @@ public class QuizDashboardXPage extends AbstractWikiXPage
         globalStats.put( STATS_KEY_AVG_SCORE, completedAttempts > 0 ? Math.round( totalScore / completedAttempts ) : 0 );
         globalStats.put( STATS_KEY_PASS_RATE, totalAttempts > 0 ? Math.round( ( totalPassed * PERCENTAGE_MULTIPLIER ) / completedAttempts ) : 0 );
 
-        Map<String, Object> model = getModel( );
-        populateBookSidebarModel( model, user, book );
-        model.put( MARK_QUIZZES, quizzes );
-        model.put( MARK_QUIZ_STATS, quizStats );
-        model.put( MARK_GLOBAL_STATS, globalStats );
+        populateBookSidebarModel( _models, user, book );
+        _models.put( MARK_QUIZZES, quizzes );
+        _models.put( MARK_QUIZ_STATS, quizStats );
+        _models.put( MARK_GLOBAL_STATS, globalStats );
 
-        return getXPage( TEMPLATE_DASHBOARD, getLocale( request ), model );
+        return getXPage( TEMPLATE_DASHBOARD, getLocale( request ) );
     }
 
     /**
@@ -246,16 +254,15 @@ public class QuizDashboardXPage extends AbstractWikiXPage
         LocalizedPaginator<QuizAttempt> paginator = new LocalizedPaginator<>( attempts, _nItemsPerPage, url.getUrl( ), AbstractPaginator.PARAMETER_PAGE_INDEX,
                 _strCurrentPageIndex, getLocale( request ) );
 
-        Map<String, Object> model = getModel( );
-        populateBookSidebarModel( model, user, book );
-        model.put( MARK_QUIZ, quiz );
-        model.put( MARK_ATTEMPTS, paginator.getPageItems( ) );
-        model.put( MARK_STATS, stats );
-        model.put( MARK_PAGINATOR, paginator );
-        model.put( MARK_NB_ITEMS_PER_PAGE, String.valueOf( _nItemsPerPage ) );
-        model.put( MARK_SEARCH_USER, strSearchUser != null ? strSearchUser : "" );
+        populateBookSidebarModel( _models, user, book );
+        _models.put( MARK_QUIZ, quiz );
+        _models.put( MARK_ATTEMPTS, paginator.getPageItems( ) );
+        _models.put( MARK_STATS, stats );
+        _models.put( MARK_PAGINATOR, paginator );
+        _models.put( MARK_NB_ITEMS_PER_PAGE, String.valueOf( _nItemsPerPage ) );
+        _models.put( MARK_SEARCH_USER, strSearchUser != null ? strSearchUser : "" );
 
-        return getXPage( TEMPLATE_QUIZ_STATS, getLocale( request ), model );
+        return getXPage( TEMPLATE_QUIZ_STATS, getLocale( request ) );
     }
 
     /**

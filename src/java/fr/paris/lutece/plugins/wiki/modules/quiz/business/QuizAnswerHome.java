@@ -35,7 +35,8 @@ package fr.paris.lutece.plugins.wiki.modules.quiz.business;
 
 import fr.paris.lutece.portal.service.plugin.Plugin;
 import fr.paris.lutece.portal.service.plugin.PluginService;
-import fr.paris.lutece.portal.service.spring.SpringContextService;
+
+import jakarta.enterprise.inject.spi.CDI;
 
 import java.util.List;
 
@@ -44,7 +45,7 @@ import java.util.List;
  */
 public final class QuizAnswerHome
 {
-    private static final IQuizAnswerDAO _dao = SpringContextService.getBean( "wiki-quiz.quizAnswerDAO" );
+    private static final IQuizAnswerDAO _dao = CDI.current( ).select( IQuizAnswerDAO.class ).get( );
     private static final Plugin _plugin = PluginService.getPlugin( "wiki" );
 
     /**

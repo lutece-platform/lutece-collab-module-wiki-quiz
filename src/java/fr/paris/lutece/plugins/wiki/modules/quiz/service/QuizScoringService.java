@@ -252,7 +252,7 @@ public final class QuizScoringService
         }
         catch( JsonProcessingException e )
         {
-            AppLogService.error( LOG_ERROR_PARSING_MATCHING + e.getMessage( ), e );
+            AppLogService.error( "{}{}", LOG_ERROR_PARSING_MATCHING, e.getMessage( ), e );
             return false;
         }
     }
@@ -299,7 +299,7 @@ public final class QuizScoringService
         }
         catch( JsonProcessingException e )
         {
-            AppLogService.error( LOG_ERROR_PARSING_ORDERING + e.getMessage( ), e );
+            AppLogService.error( "{}{}", LOG_ERROR_PARSING_ORDERING, e.getMessage( ), e );
             return false;
         }
     }

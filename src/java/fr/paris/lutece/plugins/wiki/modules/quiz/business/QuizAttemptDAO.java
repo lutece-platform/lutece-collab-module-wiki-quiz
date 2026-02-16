@@ -36,6 +36,8 @@ package fr.paris.lutece.plugins.wiki.modules.quiz.business;
 import fr.paris.lutece.portal.service.plugin.Plugin;
 import fr.paris.lutece.util.sql.DAOUtil;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -46,7 +48,8 @@ import java.util.Optional;
 /**
  * Implementation of quiz attempt data access object.
  */
-public final class QuizAttemptDAO implements IQuizAttemptDAO
+@ApplicationScoped
+public class QuizAttemptDAO implements IQuizAttemptDAO
 {
     private static final String SQL_QUERY_SELECT = "SELECT id_attempt, id_quiz, user_guid, score, passed, started_at, completed_at FROM wiki_quiz_attempt WHERE id_attempt = ?";
     private static final String SQL_QUERY_INSERT = "INSERT INTO wiki_quiz_attempt ( id_quiz, user_guid, score, passed, started_at, completed_at ) VALUES ( ?, ?, ?, ?, ?, ? )";

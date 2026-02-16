@@ -37,7 +37,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.servlet.http.HttpServletRequest;
 
 import fr.paris.lutece.plugins.wiki.business.item.AbstractWikiItem;
 import fr.paris.lutece.plugins.wiki.business.item.impl.Book;
@@ -51,6 +54,7 @@ import fr.paris.lutece.plugins.wiki.modules.quiz.service.QuizService;
 import fr.paris.lutece.plugins.wiki.service.WikiItemService;
 import fr.paris.lutece.plugins.wiki.service.security.WikiAccessControlService;
 import fr.paris.lutece.plugins.wiki.web.AbstractWikiXPage;
+import fr.paris.lutece.portal.service.security.ISecurityTokenService;
 import fr.paris.lutece.portal.service.security.LuteceUser;
 import fr.paris.lutece.portal.service.security.SecurityService;
 import fr.paris.lutece.portal.service.security.SecurityTokenService;
@@ -58,15 +62,24 @@ import fr.paris.lutece.portal.service.security.UserNotSignedException;
 import fr.paris.lutece.portal.util.mvc.commons.annotations.Action;
 import fr.paris.lutece.portal.util.mvc.commons.annotations.View;
 import fr.paris.lutece.portal.util.mvc.xpage.annotations.Controller;
+import fr.paris.lutece.portal.web.cdi.mvc.Models;
 import fr.paris.lutece.portal.web.xpages.XPage;
 
 /**
  * XPage controller for quiz viewing and participation. Handles quiz listing, playing, results viewing, and certificate access.
  */
+@RequestScoped
+@Named( "wiki-quiz.xpage.quiz" )
 @Controller( xpageName = "quiz", pageTitleI18nKey = "module.wiki.quiz.xpage.quiz.pageTitle", pagePathI18nKey = "module.wiki.quiz.xpage.quiz.pageTitle" )
 public class QuizXPage extends AbstractWikiXPage
 {
     private static final long serialVersionUID = 1L;
+
+    @Inject
+    private ISecurityTokenService _securityTokenService;
+
+    @Inject
+    private Models _models;
 
     private static final String VIEW_QUIZ_LIST = "quizList";
     private static final String VIEW_QUIZ_DETAIL = "quizDetail";
@@ -115,7 +128,6 @@ public class QuizXPage extends AbstractWikiXPage
     {
         String strBookId = request.getParameter( PARAMETER_BOOK_ID );
 
-        Map<String, Object> model = getModel( );
         LuteceUser user = SecurityService.getInstance( ).getRegisteredUser( request );
 
         if ( strBookId != null && !strBookId.isEmpty( ) )
@@ -130,17 +142,17 @@ public class QuizXPage extends AbstractWikiXPage
                 {
                     boolean bCanEdit = WikiAccessControlService.canEdit( user, book );
                     List<Quiz> quizzes = bCanEdit ? QuizService.getQuizzesByBook( nBookId ) : QuizService.getPublishedQuizzesByBook( nBookId );
-                    model.put( MARK_QUIZZES, quizzes );
-                    populateBookSidebarModel( model, user, book );
+                    _models.put( MARK_QUIZZES, quizzes );
+                    populateBookSidebarModel( _models, user, book );
                 }
             }
         }
         else
         {
-            populateCommonModel( model, user );
+            populateCommonModel( _models, user );
         }
 
-        return getXPage( TEMPLATE_QUIZ_LIST, getLocale( request ), model );
+        return getXPage( TEMPLATE_QUIZ_LIST, getLocale( request ) );
     }
 
     /**
@@ -193,33 +205,32 @@ public class QuizXPage extends AbstractWikiXPage
             addWarning( "module.wiki.quiz.quiz.warning.quizNotPublished", getLocale( request ) );
         }
 
-        Map<String, Object> model = getModel( );
-        model.put( MARK_QUIZ, quiz );
-        model.put( MARK_CAN_EDIT, bCanEdit );
-        populateBookSidebarModel( model, user, book );
+        _models.put( MARK_QUIZ, quiz );
+        _models.put( MARK_CAN_EDIT, bCanEdit );
+        populateBookSidebarModel( _models, user, book );
 
         if ( user != null )
         {
             boolean bCanStart = QuizService.canStartAttempt( quiz, user.getName( ), bCanEdit );
-            model.put( MARK_CAN_START, bCanStart );
+            _models.put( MARK_CAN_START, bCanStart );
 
             List<QuizAttempt> attempts = QuizService.getUserAttempts( nQuizId, user.getName( ) );
-            model.put( MARK_ATTEMPTS, attempts );
+            _models.put( MARK_ATTEMPTS, attempts );
 
             QuizAttempt inProgressAttempt = QuizService.getInProgressAttempt( nQuizId, user.getName( ) );
             if ( inProgressAttempt != null )
             {
-                model.put( MARK_ATTEMPT, inProgressAttempt );
+                _models.put( MARK_ATTEMPT, inProgressAttempt );
             }
         }
 
-        model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_START_ATTEMPT ) );
+        _models.put( SecurityTokenService.MARK_TOKEN, _securityTokenService.getToken( request, ACTION_START_ATTEMPT ) );
         if ( bCanEdit )
         {
-            model.put( "delete_token", SecurityTokenService.getInstance( ).getToken( request, ACTION_DELETE_QUIZ ) );
+            _models.put( "delete_token", _securityTokenService.getToken( request, ACTION_DELETE_QUIZ ) );
         }
 
-        return getXPage( TEMPLATE_QUIZ_DETAIL, getLocale( request ), model );
+        return getXPage( TEMPLATE_QUIZ_DETAIL, getLocale( request ) );
     }
 
     /**
@@ -326,15 +337,14 @@ public class QuizXPage extends AbstractWikiXPage
 
         List<QuizQuestion> questions = QuizService.getQuestionsForAttempt( quiz );
 
-        Map<String, Object> model = getModel( );
-        model.put( MARK_QUIZ, quiz );
-        model.put( MARK_ATTEMPT, attempt );
-        model.put( MARK_QUESTIONS, questions );
-        model.put( MARK_USER, user );
-        model.put( "timeRemainingSeconds", lTimeRemainingSeconds );
-        model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_SUBMIT_QUIZ ) );
+        _models.put( MARK_QUIZ, quiz );
+        _models.put( MARK_ATTEMPT, attempt );
+        _models.put( MARK_QUESTIONS, questions );
+        _models.put( MARK_USER, user );
+        _models.put( "timeRemainingSeconds", lTimeRemainingSeconds );
+        _models.put( SecurityTokenService.MARK_TOKEN, _securityTokenService.getToken( request, ACTION_SUBMIT_QUIZ ) );
 
-        return getXPage( TEMPLATE_PLAY_QUIZ, getLocale( request ), model );
+        return getXPage( TEMPLATE_PLAY_QUIZ, getLocale( request ) );
     }
 
     /**
@@ -510,21 +520,20 @@ public class QuizXPage extends AbstractWikiXPage
             }
         }
 
-        Map<String, Object> model = getModel( );
-        model.put( MARK_QUIZ, quiz );
-        model.put( MARK_ATTEMPT, attempt );
-        model.put( MARK_QUESTIONS, quiz.getQuestions( ) );
-        model.put( MARK_USER, user );
-        model.put( MARK_PAGES_MAP, pagesMap );
-        model.put( MARK_FROM, request.getParameter( PARAMETER_FROM ) );
-        model.put( MARK_QUIZ_ID, request.getParameter( PARAMETER_QUIZ_ID ) );
+        _models.put( MARK_QUIZ, quiz );
+        _models.put( MARK_ATTEMPT, attempt );
+        _models.put( MARK_QUESTIONS, quiz.getQuestions( ) );
+        _models.put( MARK_USER, user );
+        _models.put( MARK_PAGES_MAP, pagesMap );
+        _models.put( MARK_FROM, request.getParameter( PARAMETER_FROM ) );
+        _models.put( MARK_QUIZ_ID, request.getParameter( PARAMETER_QUIZ_ID ) );
 
         if ( book != null )
         {
-            populateBookSidebarModel( model, user, book );
+            populateBookSidebarModel( _models, user, book );
         }
 
-        return getXPage( TEMPLATE_QUIZ_RESULTS, getLocale( request ), model );
+        return getXPage( TEMPLATE_QUIZ_RESULTS, getLocale( request ) );
     }
 
     /**
@@ -557,12 +566,11 @@ public class QuizXPage extends AbstractWikiXPage
 
         List<QuizAttempt> attempts = QuizService.getUserAttempts( nQuizId, user.getName( ) );
 
-        Map<String, Object> model = getModel( );
-        model.put( MARK_QUIZ, quiz );
-        model.put( MARK_ATTEMPTS, attempts );
-        model.put( MARK_USER, user );
+        _models.put( MARK_QUIZ, quiz );
+        _models.put( MARK_ATTEMPTS, attempts );
+        _models.put( MARK_USER, user );
 
-        return getXPage( TEMPLATE_QUIZ_HISTORY, getLocale( request ), model );
+        return getXPage( TEMPLATE_QUIZ_HISTORY, getLocale( request ) );
     }
 
     /**

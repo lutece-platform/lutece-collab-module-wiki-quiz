@@ -1,3 +1,7 @@
+-- liquibase formatted sql
+-- changeset module-wiki-quiz:create_db_wiki_quiz.sql
+-- preconditions onFail:MARK_RAN onError:WARN
+
 -- Quiz tables for module wiki-quiz
 
 CREATE TABLE IF NOT EXISTS wiki_quiz (

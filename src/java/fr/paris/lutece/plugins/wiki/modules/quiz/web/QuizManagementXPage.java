@@ -39,7 +39,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.servlet.http.HttpServletRequest;
 
 import fr.paris.lutece.plugins.wiki.business.item.AbstractWikiItem;
 import fr.paris.lutece.plugins.wiki.business.item.WikiItemHome;
@@ -54,6 +57,7 @@ import fr.paris.lutece.plugins.wiki.exception.WikiValidationException;
 import fr.paris.lutece.plugins.wiki.modules.quiz.service.QuizService;
 import fr.paris.lutece.plugins.wiki.service.security.WikiAccessControlService;
 import fr.paris.lutece.plugins.wiki.web.AbstractWikiXPage;
+import fr.paris.lutece.portal.service.security.ISecurityTokenService;
 import fr.paris.lutece.portal.service.security.LuteceUser;
 import fr.paris.lutece.portal.service.security.SecurityService;
 import fr.paris.lutece.portal.service.security.SecurityTokenService;
@@ -61,16 +65,25 @@ import fr.paris.lutece.portal.service.security.UserNotSignedException;
 import fr.paris.lutece.portal.util.mvc.commons.annotations.Action;
 import fr.paris.lutece.portal.util.mvc.commons.annotations.View;
 import fr.paris.lutece.portal.util.mvc.xpage.annotations.Controller;
+import fr.paris.lutece.portal.web.cdi.mvc.Models;
 import fr.paris.lutece.portal.web.xpages.XPage;
 import fr.paris.lutece.util.bean.BeanUtil;
 
 /**
  * XPage controller for quiz management operations. Handles CRUD operations for quizzes and quiz questions.
  */
+@RequestScoped
+@Named( "wiki-quiz.xpage.quizmanagement" )
 @Controller( xpageName = "quizmanagement", pageTitleI18nKey = "module.wiki.quiz.xpage.quizManagement.pageTitle", pagePathI18nKey = "module.wiki.quiz.xpage.quizManagement.pageTitle" )
 public class QuizManagementXPage extends AbstractWikiXPage
 {
     private static final long serialVersionUID = 1L;
+
+    @Inject
+    private ISecurityTokenService _securityTokenService;
+
+    @Inject
+    private Models _models;
 
     private static final String VIEW_CREATE_QUIZ = "createQuiz";
     private static final String VIEW_MODIFY_QUIZ = "modifyQuiz";
@@ -145,13 +158,12 @@ public class QuizManagementXPage extends AbstractWikiXPage
         Quiz quiz = new Quiz( );
         quiz.setIdBook( nBookId );
 
-        Map<String, Object> model = getModel( );
-        model.put( MARK_QUIZ, quiz );
-        model.put( MARK_BOOK, optBook.get( ) );
-        model.put( MARK_IS_EDIT, false );
-        model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_CREATE_QUIZ ) );
+        _models.put( MARK_QUIZ, quiz );
+        _models.put( MARK_BOOK, optBook.get( ) );
+        _models.put( MARK_IS_EDIT, false );
+        _models.put( SecurityTokenService.MARK_TOKEN, _securityTokenService.getToken( request, ACTION_CREATE_QUIZ ) );
 
-        return getXPage( TEMPLATE_CREATE_QUIZ, getLocale( request ), model );
+        return getXPage( TEMPLATE_CREATE_QUIZ, getLocale( request ) );
     }
 
     /**
@@ -187,13 +199,12 @@ public class QuizManagementXPage extends AbstractWikiXPage
         {
             addError( e.getMessage( ) );
 
-            Map<String, Object> model = getModel( );
-            model.put( MARK_QUIZ, quiz );
-            model.put( MARK_BOOK, optBook.get( ) );
-            model.put( MARK_IS_EDIT, false );
-            model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_CREATE_QUIZ ) );
+            _models.put( MARK_QUIZ, quiz );
+            _models.put( MARK_BOOK, optBook.get( ) );
+            _models.put( MARK_IS_EDIT, false );
+            _models.put( SecurityTokenService.MARK_TOKEN, _securityTokenService.getToken( request, ACTION_CREATE_QUIZ ) );
 
-            return getXPage( TEMPLATE_CREATE_QUIZ, getLocale( request ), model );
+            return getXPage( TEMPLATE_CREATE_QUIZ, getLocale( request ) );
         }
     }
 
@@ -231,13 +242,12 @@ public class QuizManagementXPage extends AbstractWikiXPage
             return redirectToQuizList( request, quiz.getIdBook( ) );
         }
 
-        Map<String, Object> model = getModel( );
-        model.put( MARK_QUIZ, quiz );
-        model.put( MARK_BOOK, optBook.get( ) );
-        model.put( MARK_IS_EDIT, true );
-        model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_UPDATE_QUIZ ) );
+        _models.put( MARK_QUIZ, quiz );
+        _models.put( MARK_BOOK, optBook.get( ) );
+        _models.put( MARK_IS_EDIT, true );
+        _models.put( SecurityTokenService.MARK_TOKEN, _securityTokenService.getToken( request, ACTION_UPDATE_QUIZ ) );
 
-        return getXPage( TEMPLATE_MODIFY_QUIZ, getLocale( request ), model );
+        return getXPage( TEMPLATE_MODIFY_QUIZ, getLocale( request ) );
     }
 
     /**
@@ -281,13 +291,12 @@ public class QuizManagementXPage extends AbstractWikiXPage
         {
             addError( e.getMessage( ) );
 
-            Map<String, Object> model = getModel( );
-            model.put( MARK_QUIZ, quiz );
-            model.put( MARK_BOOK, optBook.get( ) );
-            model.put( MARK_IS_EDIT, true );
-            model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_UPDATE_QUIZ ) );
+            _models.put( MARK_QUIZ, quiz );
+            _models.put( MARK_BOOK, optBook.get( ) );
+            _models.put( MARK_IS_EDIT, true );
+            _models.put( SecurityTokenService.MARK_TOKEN, _securityTokenService.getToken( request, ACTION_UPDATE_QUIZ ) );
 
-            return getXPage( TEMPLATE_MODIFY_QUIZ, getLocale( request ), model );
+            return getXPage( TEMPLATE_MODIFY_QUIZ, getLocale( request ) );
         }
     }
 
@@ -366,13 +375,12 @@ public class QuizManagementXPage extends AbstractWikiXPage
         }
 
         Book book = (Book) optBook.get( );
-        Map<String, Object> model = getModel( );
-        model.put( MARK_QUIZ, quiz );
-        model.put( MARK_QUESTIONS, quiz.getQuestions( ) );
-        populateBookSidebarModel( model, user, book );
-        model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_DELETE_QUESTION ) );
+        _models.put( MARK_QUIZ, quiz );
+        _models.put( MARK_QUESTIONS, quiz.getQuestions( ) );
+        populateBookSidebarModel( _models, user, book );
+        _models.put( SecurityTokenService.MARK_TOKEN, _securityTokenService.getToken( request, ACTION_DELETE_QUESTION ) );
 
-        return getXPage( TEMPLATE_MANAGE_QUESTIONS, getLocale( request ), model );
+        return getXPage( TEMPLATE_MANAGE_QUESTIONS, getLocale( request ) );
     }
 
     /**
@@ -416,15 +424,14 @@ public class QuizManagementXPage extends AbstractWikiXPage
         QuizQuestion question = new QuizQuestion( );
         question.setIdQuiz( nQuizId );
 
-        Map<String, Object> model = getModel( );
-        model.put( MARK_QUIZ, quiz );
-        model.put( MARK_QUESTION, question );
-        model.put( MARK_QUESTION_TYPES, QuestionType.values( ) );
-        model.put( MARK_IS_EDIT, false );
-        populateBookSidebarModel( model, user, book );
-        model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_CREATE_QUESTION ) );
+        _models.put( MARK_QUIZ, quiz );
+        _models.put( MARK_QUESTION, question );
+        _models.put( MARK_QUESTION_TYPES, QuestionType.values( ) );
+        _models.put( MARK_IS_EDIT, false );
+        populateBookSidebarModel( _models, user, book );
+        _models.put( SecurityTokenService.MARK_TOKEN, _securityTokenService.getToken( request, ACTION_CREATE_QUESTION ) );
 
-        return getXPage( TEMPLATE_QUESTION_FORM, getLocale( request ), model );
+        return getXPage( TEMPLATE_QUESTION_FORM, getLocale( request ) );
     }
 
     /**
@@ -465,15 +472,14 @@ public class QuizManagementXPage extends AbstractWikiXPage
             Book book = (Book) optBook.get( );
             question.setAnswers( answers );
 
-            Map<String, Object> model = getModel( );
-            model.put( MARK_QUIZ, quiz );
-            model.put( MARK_QUESTION, question );
-            model.put( MARK_QUESTION_TYPES, QuestionType.values( ) );
-            model.put( MARK_IS_EDIT, false );
-            populateBookSidebarModel( model, user, book );
-            model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_CREATE_QUESTION ) );
+            _models.put( MARK_QUIZ, quiz );
+            _models.put( MARK_QUESTION, question );
+            _models.put( MARK_QUESTION_TYPES, QuestionType.values( ) );
+            _models.put( MARK_IS_EDIT, false );
+            populateBookSidebarModel( _models, user, book );
+            _models.put( SecurityTokenService.MARK_TOKEN, _securityTokenService.getToken( request, ACTION_CREATE_QUESTION ) );
 
-            return getXPage( TEMPLATE_QUESTION_FORM, getLocale( request ), model );
+            return getXPage( TEMPLATE_QUESTION_FORM, getLocale( request ) );
         }
 
         QuizService.createQuestion( question );
@@ -557,15 +563,14 @@ public class QuizManagementXPage extends AbstractWikiXPage
         }
 
         Book book = (Book) optBook.get( );
-        Map<String, Object> model = getModel( );
-        model.put( MARK_QUIZ, quiz );
-        model.put( MARK_QUESTION, question );
-        model.put( MARK_QUESTION_TYPES, QuestionType.values( ) );
-        model.put( MARK_IS_EDIT, true );
-        populateBookSidebarModel( model, user, book );
-        model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_UPDATE_QUESTION ) );
+        _models.put( MARK_QUIZ, quiz );
+        _models.put( MARK_QUESTION, question );
+        _models.put( MARK_QUESTION_TYPES, QuestionType.values( ) );
+        _models.put( MARK_IS_EDIT, true );
+        populateBookSidebarModel( _models, user, book );
+        _models.put( SecurityTokenService.MARK_TOKEN, _securityTokenService.getToken( request, ACTION_UPDATE_QUESTION ) );
 
-        return getXPage( TEMPLATE_QUESTION_FORM, getLocale( request ), model );
+        return getXPage( TEMPLATE_QUESTION_FORM, getLocale( request ) );
     }
 
     /**
@@ -616,15 +621,14 @@ public class QuizManagementXPage extends AbstractWikiXPage
             Book book = (Book) optBook.get( );
             question.setAnswers( answers );
 
-            Map<String, Object> model = getModel( );
-            model.put( MARK_QUIZ, quiz );
-            model.put( MARK_QUESTION, question );
-            model.put( MARK_QUESTION_TYPES, QuestionType.values( ) );
-            model.put( MARK_IS_EDIT, true );
-            populateBookSidebarModel( model, user, book );
-            model.put( SecurityTokenService.MARK_TOKEN, SecurityTokenService.getInstance( ).getToken( request, ACTION_UPDATE_QUESTION ) );
+            _models.put( MARK_QUIZ, quiz );
+            _models.put( MARK_QUESTION, question );
+            _models.put( MARK_QUESTION_TYPES, QuestionType.values( ) );
+            _models.put( MARK_IS_EDIT, true );
+            populateBookSidebarModel( _models, user, book );
+            _models.put( SecurityTokenService.MARK_TOKEN, _securityTokenService.getToken( request, ACTION_UPDATE_QUESTION ) );
 
-            return getXPage( TEMPLATE_QUESTION_FORM, getLocale( request ), model );
+            return getXPage( TEMPLATE_QUESTION_FORM, getLocale( request ) );
         }
 
         QuizService.updateQuestion( question );

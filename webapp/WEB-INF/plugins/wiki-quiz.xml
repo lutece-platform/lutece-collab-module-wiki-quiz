@@ -2,7 +2,7 @@
 <plug-in>
     <name>wiki-quiz</name>
     <class>fr.paris.lutece.portal.service.plugin.PluginDefaultImplementation</class>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <description>module.wiki.quiz.module.description</description>
     <documentation/>
     <installation/>
@@ -13,7 +13,7 @@
     <icon-url>images/admin/skin/plugins/wiki/wiki.png</icon-url>
     <copyright>Copyright 2002-2026 City of Paris</copyright>
     <core-version-dependency>
-        <min-core-version>7.0.0</min-core-version>
+        <min-core-version>8.0.0</min-core-version>
         <max-core-version/>
     </core-version-dependency>
 
@@ -23,15 +23,12 @@
     <applications>
         <application>
             <application-id>quiz</application-id>
-            <application-class>fr.paris.lutece.plugins.wiki.modules.quiz.web.QuizXPage</application-class>
         </application>
         <application>
             <application-id>quizmanagement</application-id>
-            <application-class>fr.paris.lutece.plugins.wiki.modules.quiz.web.QuizManagementXPage</application-class>
         </application>
         <application>
             <application-id>quizdashboard</application-id>
-            <application-class>fr.paris.lutece.plugins.wiki.modules.quiz.web.QuizDashboardXPage</application-class>
         </application>
     </applications>
 
