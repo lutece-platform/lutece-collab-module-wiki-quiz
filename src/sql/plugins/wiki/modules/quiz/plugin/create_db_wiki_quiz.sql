@@ -1,6 +1,7 @@
 -- liquibase formatted sql
 -- changeset module-wiki-quiz:create_db_wiki_quiz.sql
 -- preconditions onFail:MARK_RAN onError:WARN
+-- precondition-sql-check expectedResult:1 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'wiki_item'
 
 -- Quiz tables for module wiki-quiz
 
