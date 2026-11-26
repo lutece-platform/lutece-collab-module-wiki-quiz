@@ -1,0 +1,232 @@
+<#ftl output_format="HTML">
+<#if book??>
+    <div class="row">
+        <div class="wiki-sidebar-col">
+            <div class="sticky-top">
+                <#include "../../commons/sidebar.html">
+            </div>
+        </div>
+        <div class="col px-5 pt-0 wiki-markdown-col">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-2">${quiz.title}</h2>
+                    <p class="text-muted mb-0">#i18n{module.wiki.quiz.quiz.results}</p>
+                </div>
+<#if from?? && from == "stats" && quiz_id??>
+                    <a href="jsp/site/Portal.jsp?page=quizdashboard&view=quizStats&quiz_id=${quiz_id}" class="btn btn-light rounded-pill px-4">
+                        <i class="ti ti-arrow-left me-2"></i>#i18n{wiki.action.back}
+                    </a>
+                <#else>
+                    <a href="jsp/site/Portal.jsp?page=quiz&view=quizDetail&quiz_id=${quiz.id}" class="btn btn-light rounded-pill px-4">
+                        <i class="ti ti-arrow-left me-2"></i>#i18n{wiki.action.back}
+                    </a>
+                </#if>
+            </div>
+
+            <#include "../../commons/messages.html" />
+
+            <div class="row">
+                <div class="col-lg-12 col-xxl-9 mb-3">
+                    <div class="card" style="border-radius: 20px;">
+                        <div class="card-body p-4">
+                            <h5 class="mb-4">#i18n{module.wiki.quiz.quiz.answerDetails}</h5>
+
+                            <#list questions as question>
+                                <#assign responseList = attempt.responses?filter(r -> r.idQuestion == question.id)>
+                                <#assign hasResponse = (responseList?size gt 0)>
+                                <#assign response = hasResponse?then(responseList?first, {})>
+                                <#assign userAnswerIds = hasResponse?then(response.userAnswer!'', '')>
+                                <div class="mb-4 pb-4 <#if question?has_next>border-bottom</#if>">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="d-flex align-items-start">
+                                            <span class="badge bg-dark rounded-pill me-3 px-3 py-2">${question?counter}</span>
+                                            <div>
+                                                <strong>${question.questionText}</strong>
+                                                <div class="small text-muted">${question.points} point<#if question.points gt 1>s</#if></div>
+                                            </div>
+                                        </div>
+                                        <#if hasResponse && response.isCorrect!false>
+                                            <span class="badge text-success-emphasis bg-success-subtle border border-success-subtle"><i class="ti ti-check me-1"></i>#i18n{module.wiki.quiz.quiz.correct}</span>
+                                        <#else>
+                                            <span class="badge text-danger-emphasis bg-danger-subtle border border-danger-subtle"><i class="ti ti-x me-1"></i>#i18n{module.wiki.quiz.quiz.incorrect}</span>
+                                        </#if>
+                                    </div>
+
+                                    <div class="ms-5">
+                                        <#if question.questionType.code == "MCQ" || question.questionType.code == "TRUE_FALSE">
+                                            <#list question.answers as answer>
+                                                <#assign isUserAnswer = userAnswerIds?contains(answer.id?c)>
+                                                <#assign isCorrectAnswer = answer.isCorrect>
+                                                <div class="d-flex align-items-center mb-2 p-2 rounded <#if isUserAnswer && isCorrectAnswer>bg-success bg-opacity-10<#elseif isUserAnswer>bg-danger bg-opacity-10<#else>bg-light text-dark</#if>">
+                                                    <#if isUserAnswer>
+                                                        <i class="ti <#if isCorrectAnswer>ti-circle-check-filled text-success<#else>ti-circle-x-filled text-danger</#if> me-2"></i>
+                                                    <#elseif isCorrectAnswer>
+                                                        <i class="ti ti-circle-check me-2 text-success"></i>
+                                                    <#else>
+                                                        <i class="ti ti-circle me-2 text-muted"></i>
+                                                    </#if>
+                                                    <span <#if isCorrectAnswer>class="fw-semibold text-success"<#elseif isUserAnswer>class="text-danger"</#if>>${answer.answerText}</span>
+                                                    <#if isUserAnswer && !isCorrectAnswer>
+                                                        <span class="badge ms-auto text-danger-emphasis bg-danger-subtle border border-danger-subtle">#i18n{module.wiki.quiz.quiz.yourAnswer}</span>
+                                                    <#elseif isCorrectAnswer>
+                                                        <span class="badge ms-auto text-success-emphasis bg-success-subtle border border-success-subtle">#i18n{module.wiki.quiz.quiz.correctAnswer}</span>
+                                                    </#if>
+                                                </div>
+                                            </#list>
+
+                                        <#elseif question.questionType.code == "MATCHING">
+                                            <#assign userMatchMap = {}>
+                                            <#if userAnswerIds?has_content && userAnswerIds?starts_with("{")>
+                                                <#attempt>
+                                                    <#assign userMatchMap = userAnswerIds?eval>
+                                                <#recover>
+                                                </#attempt>
+                                            </#if>
+                                            <#list question.answers as answer>
+                                                <#assign userMatch = (userMatchMap[answer.id?c])!''>
+                                                <#assign isMatchCorrect = (userMatch == (answer.matchTarget!''))>
+                                                <div class="mb-2">
+                                                    <div class="fw-semibold mb-1">${answer.answerText}</div>
+                                                    <#if isMatchCorrect>
+                                                        <div class="d-flex align-items-center p-2 rounded bg-success bg-opacity-10">
+                                                            <i class="ti ti-circle-check-filled me-2 text-success"></i>
+                                                            <span class="text-success">${userMatch}</span>
+                                                            <span class="badge ms-auto text-success-emphasis bg-success-subtle border border-success-subtle">#i18n{module.wiki.quiz.quiz.correctAnswer}</span>
+                                                        </div>
+                                                    <#else>
+                                                        <div class="d-flex align-items-center p-2 rounded bg-danger bg-opacity-10 mb-1">
+                                                            <i class="ti ti-circle-x-filled me-2 text-danger"></i>
+                                                            <span class="text-danger">${userMatch!'-'}</span>
+                                                            <span class="badge ms-auto text-danger-emphasis bg-danger-subtle border border-danger-subtle">#i18n{module.wiki.quiz.quiz.yourAnswer}</span>
+                                                        </div>
+                                                        <div class="d-flex align-items-center p-2 rounded bg-light">
+                                                            <i class="ti ti-circle-check me-2 text-success"></i>
+                                                            <span class="fw-semibold text-success">${answer.matchTarget!''}</span>
+                                                            <span class="badge ms-auto text-success-emphasis bg-success-subtle border border-success-subtle">#i18n{module.wiki.quiz.quiz.correctAnswer}</span>
+                                                        </div>
+                                                    </#if>
+                                                </div>
+                                            </#list>
+
+                                        <#elseif question.questionType.code == "ORDERING">
+                                            <div class="small text-muted mb-2">#i18n{module.wiki.quiz.quiz.ordering.yourOrder}</div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="small fw-semibold mb-1 text-muted">#i18n{module.wiki.quiz.quiz.ordering.yourAnswer}</div>
+                                                    <#if userAnswerIds?has_content && userAnswerIds?starts_with("[")>
+                                                        <ol class="list-group list-group-numbered">
+                                                            <#assign userOrder = userAnswerIds?replace("[", "")?replace("]", "")?replace(" ", "")>
+                                                            <#list userOrder?split(",") as answerId>
+                                                                <#list question.answers as answer>
+                                                                    <#if answer.id?c == answerId>
+                                                                        <li class="list-group-item py-1 px-2">${answer.answerText}</li>
+                                                                    </#if>
+                                                                </#list>
+                                                            </#list>
+                                                        </ol>
+                                                    </#if>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="small fw-semibold mb-1 text-success">#i18n{module.wiki.quiz.quiz.ordering.correctOrder}</div>
+                                                    <ol class="list-group list-group-numbered">
+                                                        <#list question.answers?sort_by("correctOrder") as answer>
+                                                            <li class="list-group-item py-1 px-2 bg-success bg-opacity-10">${answer.answerText}</li>
+                                                        </#list>
+                                                    </ol>
+                                                </div>
+                                            </div>
+                                        </#if>
+                                    </div>
+
+                                    <#if question.explanation?? && question.explanation?has_content>
+                                        <div class="ms-5 mt-2 text-muted"><strong>#i18n{module.wiki.quiz.quiz.explanation}:</strong> ${question.explanation}</div>
+                                    </#if>
+
+                                    <#if question.sourcePageIds?? && question.sourcePageIds?size gt 0>
+                                        <div class="ms-5 mt-2">
+                                            <i class="ti ti-book me-1"></i>
+                                            <span class="small text-muted">#i18n{module.wiki.quiz.quiz.learnMore}:</span>
+                                            <#list question.sourcePageIds as pageId>
+                                                <#if pages_map[pageId?c]??>
+                                                    <#assign page = pages_map[pageId?c]>
+                                                    <a href="${page.viewUrl}" class="badge bg-light text-dark text-decoration-none ms-1" target="_blank">
+                                                        ${(page.currentRevision.title)!(page.code)}
+                                                    </a>
+                                                </#if>
+                                            </#list>
+                                        </div>
+                                    </#if>
+                                </div>
+                            </#list>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-12 col-xxl-3">
+                    <div class="card" style="border-radius: 20px;">
+                        <div class="card-body p-4">
+                            <h5 class="mb-3">#i18n{module.wiki.quiz.quiz.summary}</h5>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <#if attempt.passed>
+                                            <div class="bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                                                <i class="ti ti-circle-check text-success"></i>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block">#i18n{module.wiki.quiz.quiz.status}</small>
+                                                <strong class="text-success">#i18n{module.wiki.quiz.quiz.passed}</strong>
+                                            </div>
+                                        <#else>
+                                            <div class="bg-danger bg-opacity-10 rounded-circle p-2 me-3">
+                                                <i class="ti ti-circle-x text-danger"></i>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block">#i18n{module.wiki.quiz.quiz.status}</small>
+                                                <strong class="text-danger">#i18n{module.wiki.quiz.quiz.failed}</strong>
+                                            </div>
+                                        </#if>
+                                    </div>
+                                </li>
+                                <li class="mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-light rounded-circle p-2 me-3">
+                                            <i class="ti ti-target"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block">#i18n{module.wiki.quiz.quiz.score}</small>
+                                            <strong>${attempt.score}%</strong>
+                                        </div>
+                                    </div>
+                                </li>
+                                <#if attempt.completedAt??>
+                                    <li class="mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-light rounded-circle p-2 me-3">
+                                                <i class="ti ti-clock"></i>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block">#i18n{module.wiki.quiz.quiz.completedAt}</small>
+                                                <strong>${attempt.completedAt?string("dd/MM/yyyy HH:mm")}</strong>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </#if>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<#else>
+    <div class="container py-4">
+        <div class="alert alert-warning">
+            #i18n{module.wiki.quiz.quiz.error.bookNotFound}
+        </div>
+    </div>
+</#if>
+
+<#if is_module_ai_present?? && is_module_ai_present>
+    <#include "/skin/plugins/wiki/modules/ai/chat.html">
+</#if>

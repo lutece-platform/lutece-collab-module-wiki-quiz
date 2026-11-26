@@ -1,0 +1,218 @@
+<#ftl output_format="HTML">
+<div class="wiki-hero-section mb-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="text-center">
+                    <div class="wiki-hero-title">
+                        <h1 class="display-4 fw-bold">${quiz.title}</h1>
+                        <#if quiz.description?? && quiz.description?has_content>
+                            <p class="lead text-muted mb-4">${quiz.description}</p>
+                        </#if>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <form action="jsp/site/Portal.jsp" method="post" id="quiz-form" data-quiz-id="${quiz.id}">
+                <input type="hidden" name="page" value="quiz">
+                <input type="hidden" name="action" value="submitQuiz">
+                <input type="hidden" name="attempt_id" value="${attempt.id}">
+                <input type="hidden" name="token" value="${token}">
+
+                <#list questions as question>
+                            <div class="<#if question?has_next>border-bottom mb-3 pb-3<#else>mb-4</#if>">
+                                <div class="mb-3 d-flex justify-content-between align-items-start">
+                                    <strong>${question?counter}. ${question.questionText}</strong>
+                                    <span class="badge text-info-emphasis bg-info-subtle ms-2">${question.points} point<#if question.points gt 1>s</#if></span>
+                                </div>
+
+                                <div>
+                            <#if question.questionType.code == "MCQ">
+                                <div class="list-group">
+                                    <#list question.answers as answer>
+                                        <label class="list-group-item d-flex align-items-center m-0" style="cursor: pointer;">
+                                            <input class="form-check-input me-2 flex-shrink-0" type="checkbox" name="mcq_${question.id}" value="${answer.id}" style="width: 1.2em; height: 1.2em;">
+                                            ${answer.answerText}
+                                        </label>
+                                    </#list>
+                                </div>
+                                <input type="hidden" name="answer_${question.id}" id="answer_hidden_${question.id}">
+
+                            <#elseif question.questionType.code == "TRUE_FALSE">
+                                <div class="list-group">
+                                    <#list question.answers as answer>
+                                        <label class="list-group-item d-flex align-items-center m-0" style="cursor: pointer;">
+                                            <input class="form-check-input me-2 flex-shrink-0" type="radio" name="answer_${question.id}" value="${answer.id}" style="width: 1.2em; height: 1.2em;">
+                                            ${answer.answerText}
+                                        </label>
+                                    </#list>
+                                </div>
+
+                            <#elseif question.questionType.code == "MATCHING">
+                                <div class="small text-muted mb-2">#i18n{module.wiki.quiz.quiz.matching.instruction}</div>
+                                <#list question.answers as answer>
+                                    <div class="row mb-2 align-items-center">
+                                        <div class="col-5">
+                                            <span class="form-control">${answer.answerText}</span>
+                                        </div>
+                                        <div class="col-1 text-center">
+                                            <i class="ti ti-arrow-right text-muted"></i>
+                                        </div>
+                                        <div class="col-6">
+                                            <select class="form-control form-select" name="match_${question.id}_${answer.id}">
+                                                <option value="">#i18n{module.wiki.quiz.quiz.matching.select}</option>
+                                                <#list question.answers as opt>
+                                                    <option value="${opt.matchTarget!''}">${opt.matchTarget!''}</option>
+                                                </#list>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </#list>
+
+                            <#elseif question.questionType.code == "ORDERING">
+                                <div class="small text-muted mb-2">#i18n{module.wiki.quiz.quiz.ordering.instruction}</div>
+                                <ul class="list-group ordering-list" data-question-id="${question.id}">
+                                    <#list question.answers as answer>
+                                        <li class="list-group-item d-flex align-items-center py-2" data-answer-id="${answer.id}" style="cursor: grab;">
+                                            <i class="ti ti-grip-vertical me-2 text-muted"></i>
+                                            ${answer.answerText}
+                                        </li>
+                                    </#list>
+                                </ul>
+                                    <input type="hidden" name="answer_${question.id}" id="order_${question.id}">
+                                </#if>
+                                </div>
+                            </div>
+                </#list>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        var quizId = document.getElementById('quiz-form').dataset.quizId;
+        location.replace('jsp/site/Portal.jsp?page=quiz&view=quizDetail&quiz_id=' + quizId);
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('quiz-form');
+
+    function updateAllMcqHiddenFields() {
+        var questionIds = new Set();
+        document.querySelectorAll('input[name^="mcq_"]').forEach(function(cb) {
+            questionIds.add(cb.name.replace('mcq_', ''));
+        });
+        questionIds.forEach(function(questionId) {
+            var checkboxes = document.querySelectorAll('input[name="mcq_' + questionId + '"]:checked');
+            var values = Array.from(checkboxes).map(function(cb) { return cb.value; });
+            var hidden = document.getElementById('answer_hidden_' + questionId);
+            if (hidden) hidden.value = values.join(',');
+        });
+    }
+
+    document.querySelectorAll('input[name^="mcq_"]').forEach(function(checkbox) {
+        checkbox.addEventListener('change', updateAllMcqHiddenFields);
+    });
+
+    form.addEventListener('submit', function() {
+        updateAllMcqHiddenFields();
+    });
+
+    document.querySelectorAll('.ordering-list').forEach(function(list) {
+        var questionId = list.dataset.questionId;
+        var hiddenInput = document.getElementById('order_' + questionId);
+
+        function updateOrder() {
+            var order = Array.from(list.querySelectorAll('li')).map(function(li) {
+                return parseInt(li.dataset.answerId);
+            });
+            hiddenInput.value = JSON.stringify(order);
+        }
+        updateOrder();
+
+        list.addEventListener('dragover', function(e) { e.preventDefault(); });
+        list.querySelectorAll('li').forEach(function(item) {
+            item.draggable = true;
+            item.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('text/plain', item.dataset.answerId);
+                item.classList.add('dragging');
+            });
+            item.addEventListener('dragend', function() {
+                item.classList.remove('dragging');
+                updateOrder();
+            });
+            item.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                var dragging = list.querySelector('.dragging');
+                if (dragging && dragging !== item) {
+                    var rect = item.getBoundingClientRect();
+                    var after = e.clientY > rect.top + rect.height / 2;
+                    if (after) {
+                        item.after(dragging);
+                    } else {
+                        item.before(dragging);
+                    }
+                }
+            });
+        });
+    });
+
+    var timerEl = document.getElementById('quiz-timer');
+    if (timerEl) {
+        var totalSeconds = parseInt(timerEl.dataset.timeRemaining);
+        var timerDisplay = document.getElementById('timer-display');
+
+        var interval = setInterval(function() {
+            totalSeconds--;
+            var minutes = Math.floor(totalSeconds / 60);
+            var seconds = totalSeconds % 60;
+            timerDisplay.innerHTML = '<i class="ti ti-clock"></i> ' + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+
+            if (totalSeconds <= 60) {
+                timerEl.classList.remove('text-info-emphasis', 'bg-info-subtle');
+                timerEl.classList.add('text-danger-emphasis', 'bg-danger-subtle');
+            }
+
+            if (totalSeconds <= 0) {
+                clearInterval(interval);
+                updateAllMcqHiddenFields();
+                form.submit();
+            }
+        }, 1000);
+    }
+});
+</script>
+
+<div class="position-fixed bottom-0 start-0 end-0 bg-white border-top py-3" style="z-index: 1000;">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-center position-relative">
+            <div class="d-flex gap-2">
+                <button type="submit" form="quiz-form" class="btn btn-lg btn-dark rounded-pill px-4">#i18n{wiki.action.save}</button>
+                <a href="jsp/site/Portal.jsp?page=quiz&view=quizDetail&quiz_id=${quiz.id}" class="btn btn-lg btn-light rounded-pill px-4">#i18n{wiki.action.cancel}</a>
+            </div>
+            <#if timeRemainingSeconds?? && timeRemainingSeconds gt 0>
+                <#assign displayMinutes = (timeRemainingSeconds / 60)?floor>
+                <#assign displaySeconds = timeRemainingSeconds % 60>
+                <div id="quiz-timer" class="badge <#if timeRemainingSeconds lte 60>text-danger-emphasis bg-danger-subtle<#else>text-info-emphasis bg-info-subtle</#if> px-4 py-2 position-absolute end-0" data-time-remaining="${timeRemainingSeconds}">
+                    <h4 class="mb-0 d-inline" id="timer-display"><i class="ti ti-clock"></i> ${displayMinutes}:<#if displaySeconds lt 10>0</#if>${displaySeconds}</h4>
+                </div>
+            </#if>
+        </div>
+    </div>
+</div>
+
+<style>
+body { padding-bottom: 80px; }
+.ordering-list li.dragging { opacity: 0.5; background: #f8f9fa; }
+.ordering-list li:hover { background: #f8f9fa; }
+</style>

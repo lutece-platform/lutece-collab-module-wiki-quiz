@@ -1,0 +1,137 @@
+<#ftl output_format="HTML">
+<#if book??>
+    <div class="row">
+        <div class="wiki-sidebar-col">
+            <div class="sticky-top">
+                <#include "../../commons/sidebar.html">
+            </div>
+        </div>
+        <div class="col px-5 pt-0 wiki-markdown-col">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>${quiz.title}</h2>
+                    <p class="text-muted mb-0">#i18n{module.wiki.quiz.quiz.questions}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="jsp/site/Portal.jsp?page=quizmanagement&view=createQuestion&quiz_id=${quiz.id}" class="btn btn-dark rounded-pill px-4">
+                        <i class="ti ti-plus me-2"></i>#i18n{module.wiki.quiz.quizQuestion.action.create}
+                    </a>
+                    <#if is_module_ai_present?? && is_module_ai_present>
+                        <a href="jsp/site/Portal.jsp?page=wikiaiQuizGeneration&view=viewWorkflows&quiz_id=${quiz.id}" class="btn btn-light rounded-pill px-4">
+                            <i class="ti ti-sparkles me-2"></i>#i18n{module.wiki.ai.quizGeneration.pageTitle}
+                        </a>
+                    </#if>
+                    <a href="jsp/site/Portal.jsp?page=quiz&view=quizList&book_id=${book.id}" class="btn btn-light rounded-pill px-4">
+                        <i class="ti ti-arrow-left me-2"></i>#i18n{wiki.action.back}
+                    </a>
+                </div>
+            </div>
+
+            <#include "../../commons/messages.html" />
+
+            <#if questions?? && questions?size gt 0>
+                <form method="post" action="jsp/site/Portal.jsp" id="reorderForm">
+                    <input type="hidden" name="page" value="quizmanagement">
+                    <input type="hidden" name="action" value="reorderQuestions">
+                    <input type="hidden" name="quiz_id" value="${quiz.id}">
+                    <input type="hidden" name="token" value="${token}">
+
+                    <div id="sortable-list" class="list-group list-group-flush mb-4">
+                        <#list questions as question>
+                            <div class="list-group-item draggable-item py-2" draggable="true" data-id="${question.id}">
+                                <input type="hidden" name="question_id" value="${question.id}">
+                                <div class="d-flex align-items-center">
+                                    <i class="ti ti-grip-vertical me-3 text-muted" style="cursor: grab;"></i>
+                                    <span class="badge bg-dark rounded-pill me-3">${question?counter}</span>
+                                    <span class="flex-grow-1">${question.questionText}</span>
+                                    <span class="badge text-info-emphasis bg-info-subtle border border-info-subtle me-2"><#if question.questionType.code == "MCQ">#i18n{module.wiki.quiz.quizQuestion.type.mcq}<#elseif question.questionType.code == "TRUE_FALSE">#i18n{module.wiki.quiz.quizQuestion.type.trueFalse}<#elseif question.questionType.code == "MATCHING">#i18n{module.wiki.quiz.quizQuestion.type.matching}<#else>#i18n{module.wiki.quiz.quizQuestion.type.ordering}</#if></span>
+                                    <span class="badge text-secondary-emphasis bg-secondary-subtle border border-secondary-subtle me-2">${question.points} pts</span>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="jsp/site/Portal.jsp?page=quizmanagement&view=modifyQuestion&question_id=${question.id}" class="btn btn-light" title="#i18n{wiki.action.modify}">
+                                            <i class="ti ti-edit"></i>
+                                        </a>
+                                        <a href="jsp/site/Portal.jsp?page=quizmanagement&action=deleteQuestion&question_id=${question.id}&token=${token}" class="btn btn-light text-danger" title="#i18n{wiki.action.delete}" onclick="return confirm('#i18n{module.wiki.quiz.quizQuestion.confirmDelete}');">
+                                            <i class="ti ti-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </#list>
+                    </div>
+                    <button type="submit" class="btn btn-dark rounded-pill px-4">
+                        <i class="ti ti-device-floppy me-2"></i>#i18n{module.wiki.quiz.quiz.saveOrder}
+                    </button>
+                </form>
+            <#else>
+                <div class="alert alert-info" role="alert">
+                    #i18n{module.wiki.quiz.quiz.noQuestions}
+                </div>
+                <a href="jsp/site/Portal.jsp?page=quizmanagement&view=createQuestion&quiz_id=${quiz.id}" class="btn btn-dark rounded-pill px-4">
+                    <i class="ti ti-plus me-2"></i>#i18n{module.wiki.quiz.quizQuestion.action.createFirst}
+                </a>
+            </#if>
+        </div>
+    </div>
+<#else>
+    <div class="container py-4">
+        <div class="alert alert-warning">
+            #i18n{module.wiki.quiz.quiz.selectBook}
+        </div>
+    </div>
+</#if>
+
+<#if is_module_ai_present?? && is_module_ai_present>
+    <#include "/skin/plugins/wiki/modules/ai/chat.html">
+</#if>
+
+<style>
+.draggable-item.dragging { opacity: 0.5; background: #f8f9fa; }
+.draggable-item.drag-over { border-top: 2px solid var(--bs-primary); }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var list = document.getElementById('sortable-list');
+    if (!list) return;
+
+    var draggedElement = null;
+    var items = list.querySelectorAll('.draggable-item');
+
+    items.forEach(function(item) {
+        item.addEventListener('dragstart', function(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        item.addEventListener('dragend', function() {
+            this.classList.remove('dragging');
+            items.forEach(function(i) { i.classList.remove('drag-over'); });
+        });
+
+        item.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        });
+
+        item.addEventListener('drop', function(e) {
+            e.stopPropagation();
+            if (draggedElement !== this) {
+                var allItems = Array.from(list.querySelectorAll('.draggable-item'));
+                var draggedIndex = allItems.indexOf(draggedElement);
+                var targetIndex = allItems.indexOf(this);
+                if (draggedIndex < targetIndex) {
+                    this.parentNode.insertBefore(draggedElement, this.nextSibling);
+                } else {
+                    this.parentNode.insertBefore(draggedElement, this);
+                }
+            }
+            this.classList.remove('drag-over');
+        });
+
+        item.addEventListener('dragleave', function() {
+            this.classList.remove('drag-over');
+        });
+    });
+});
+</script>

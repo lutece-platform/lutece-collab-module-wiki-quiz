@@ -1,0 +1,89 @@
+<#ftl output_format="HTML">
+<div class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-2">${quiz.title}</h1>
+            <p class="text-muted mb-0">#i18n{module.wiki.quiz.quiz.history}</p>
+        </div>
+        <a href="jsp/site/Portal.jsp?page=quiz&view=quizDetail&quiz_id=${quiz.id}" class="btn btn-light rounded-pill px-4">
+            <i class="ti ti-arrow-left me-2"></i>#i18n{wiki.action.back}
+        </a>
+    </div>
+
+    <#include "../../commons/messages.html" />
+
+    <#if attempts?? && attempts?size gt 0>
+        <div class="card" style="border-radius: 20px;">
+            <div class="card-body p-4">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>#i18n{module.wiki.quiz.quiz.date}</th>
+                                <th>#i18n{module.wiki.quiz.quiz.score}</th>
+                                <th>#i18n{module.wiki.quiz.quiz.status}</th>
+                                <th>#i18n{module.wiki.quiz.quiz.duration}</th>
+                                <th class="text-end">#i18n{module.wiki.quiz.quiz.actions}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <#list attempts as att>
+                                <tr>
+                                    <td>
+                                        <strong>${att.startedAt?string("dd/MM/yyyy")}</strong>
+                                        <br>
+                                        <small class="text-muted">${att.startedAt?string("HH:mm")}</small>
+                                    </td>
+                                    <td>
+                                        <#if att.score??>
+                                            <span class="badge bg-light text-dark fs-6">${att.score}%</span>
+                                        <#else>
+                                            <span class="text-muted">-</span>
+                                        </#if>
+                                    </td>
+                                    <td>
+                                        <#if att.completed>
+                                            <#if att.passed>
+                                                <span class="badge text-success-emphasis bg-success-subtle border border-success-subtle">#i18n{module.wiki.quiz.quiz.passed}</span>
+                                            <#else>
+                                                <span class="badge text-danger-emphasis bg-danger-subtle border border-danger-subtle">#i18n{module.wiki.quiz.quiz.failed}</span>
+                                            </#if>
+                                        <#else>
+                                            <span class="badge text-warning-emphasis bg-warning-subtle border border-warning-subtle">#i18n{module.wiki.quiz.quiz.inProgress}</span>
+                                        </#if>
+                                    </td>
+                                    <td>
+                                        <#if att.completedAt??>
+                                            <#assign duration = (att.completedAt?long - att.startedAt?long) / 60000>
+                                            ${duration?round} min
+                                        <#else>
+                                            <span class="text-muted">-</span>
+                                        </#if>
+                                    </td>
+                                    <td class="text-end">
+                                        <#if att.completed>
+                                            <a href="jsp/site/Portal.jsp?page=quiz&view=quizResults&attempt_id=${att.id}" class="btn btn-sm btn-dark rounded-pill px-3">
+                                                <i class="ti ti-eye me-1"></i>#i18n{wiki.action.view}
+                                            </a>
+                                        <#else>
+                                            <a href="jsp/site/Portal.jsp?page=quiz&view=playQuiz&attempt_id=${att.id}" class="btn btn-sm btn-warning rounded-pill px-3">
+                                                <i class="ti ti-player-play me-1"></i>#i18n{module.wiki.quiz.quiz.continue}
+                                            </a>
+                                        </#if>
+                                    </td>
+                                </tr>
+                            </#list>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    <#else>
+        <div class="card" style="border-radius: 20px;">
+            <div class="card-body p-5 text-center">
+                <i class="ti ti-history display-1 text-muted mb-3"></i>
+                <p class="text-muted mb-0">#i18n{module.wiki.quiz.quiz.noAttempts}</p>
+            </div>
+        </div>
+    </#if>
+</div>

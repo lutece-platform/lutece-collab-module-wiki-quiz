@@ -1,0 +1,105 @@
+<#ftl output_format="HTML">
+<#assign on_quiz_list = true>
+<style>
+    .card-quiz {
+        position: relative;
+    }
+    .card-quiz .card-pointer {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        opacity: 0;
+        transform: translate(-4px, 4px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        color: var(--bs-emphasis-color);
+    }
+    .card-quiz:hover .card-pointer {
+        opacity: 1;
+        transform: translate(0);
+    }
+</style>
+
+<#if book??>
+    <div class="row">
+        <div class="wiki-sidebar-col">
+            <div class="sticky-top">
+                <#include "../../commons/sidebar.html">
+            </div>
+        </div>
+        <div class="col px-5 pt-0 wiki-markdown-col">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h2>#i18n{module.wiki.quiz.quiz.title}</h2>
+                    <p class="text-muted mb-0">#i18n{module.wiki.quiz.quiz.testYourKnowledge}</p>
+                </div>
+                <#if can_edit?? && can_edit>
+                    <div class="d-flex gap-2">
+                        <a href="jsp/site/Portal.jsp?page=quizdashboard&view=dashboard&book_id=${book.id}" class="btn btn-light rounded-pill px-4">
+                            <i class="ti ti-chart-bar me-2"></i>#i18n{module.wiki.quiz.quiz.dashboard}
+                        </a>
+                        <a href="jsp/site/Portal.jsp?page=quizmanagement&view=createQuiz&book_id=${book.id}" class="btn btn-dark rounded-pill px-4">
+                            <i class="ti ti-plus me-2"></i>#i18n{module.wiki.quiz.quiz.action.create}
+                        </a>
+                    </div>
+                </#if>
+            </div>
+
+            <#include "../../commons/messages.html" />
+
+            <#if quizzes?? && quizzes?size gt 0>
+                <div class="row">
+                    <#list quizzes as quiz>
+                        <div class="col-md-6 col-xl-4 mb-3">
+                            <div class="card card-quiz h-100 d-flex flex-column">
+                                <a href="jsp/site/Portal.jsp?page=quiz&view=quizDetail&quiz_id=${quiz.id}" class="card-body d-flex flex-column text-decoration-none text-body flex-grow-1">
+                                    <div class="card-pointer">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M16.243 6.757a1 1 0 0 1 1 1v7.072a1 1 0 0 1-2 0v-4.657L8.464 16.95a1 1 0 0 1-1.414-1.414l6.778-6.779H9.172a1 1 0 0 1 0-2h7.07Z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
+                                    <h5 class="card-title text-break">${quiz.title}</h5>
+                                    <#if quiz.description?? && quiz.description?has_content>
+                                        <p class="card-text small text-muted">${quiz.description}</p>
+                                    </#if>
+                                    <div class="d-flex flex-wrap gap-2 small text-muted mt-auto">
+                                        <#if quiz.timeLimitMinutes??>
+                                            <span><i class="ti ti-clock me-1"></i>${quiz.timeLimitMinutes} min</span>
+                                        </#if>
+                                        <#if quiz.maxAttempts??>
+                                            <span><i class="ti ti-repeat me-1"></i>${quiz.maxAttempts} #i18n{module.wiki.quiz.quiz.attempts}</span>
+                                        </#if>
+                                        <span><i class="ti ti-target me-1"></i>${quiz.passingScore}%</span>
+                                        <#if can_edit?? && can_edit && !quiz.published>
+                                            <strong><i class="ti ti-x me-1"></i>#i18n{module.wiki.quiz.quiz.unpublished}</strong>
+                                        </#if>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </#list>
+                </div>
+            <#else>
+                <div class="card" style="border-radius: 20px;">
+                    <div class="card-body p-5 text-center">
+                        <p class="text-muted mb-3">#i18n{module.wiki.quiz.quiz.noQuizzes}</p>
+                        <#if can_edit?? && can_edit>
+                            <a href="jsp/site/Portal.jsp?page=quizmanagement&view=createQuiz&book_id=${book.id}" class="btn btn-dark rounded-pill px-4">
+                                <i class="ti ti-plus me-2"></i>#i18n{module.wiki.quiz.quiz.action.createFirst}
+                            </a>
+                        </#if>
+                    </div>
+                </div>
+            </#if>
+        </div>
+    </div>
+<#else>
+    <div class="container py-4">
+        <div class="alert alert-warning">
+            #i18n{module.wiki.quiz.quiz.selectBook}
+        </div>
+    </div>
+</#if>
+
+<#if is_module_ai_present?? && is_module_ai_present>
+    <#include "/skin/plugins/wiki/modules/ai/chat.html">
+</#if>

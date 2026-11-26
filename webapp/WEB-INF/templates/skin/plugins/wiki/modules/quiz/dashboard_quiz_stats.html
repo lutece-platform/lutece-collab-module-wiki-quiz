@@ -1,0 +1,179 @@
+<#ftl output_format="HTML">
+<#assign on_quiz_dashboard = true>
+
+<#if book??>
+    <div class="row">
+        <div class="wiki-sidebar-col">
+            <div class="sticky-top">
+                <#include "../../commons/sidebar.html">
+            </div>
+        </div>
+        <div class="col px-5 pt-0 wiki-markdown-col">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h2>${quiz.title}</h2>
+                    <p class="text-muted text-truncate mb-0">#i18n{module.wiki.quiz.dashboard.quizStatistics}</p>
+                </div>
+                <a href="jsp/site/Portal.jsp?page=quizdashboard&view=dashboard&book_id=${book.id}" class="btn btn-light rounded-pill px-4">
+                    <i class="ti ti-arrow-left me-2"></i>#i18n{wiki.action.back}
+                </a>
+            </div>
+
+            <#include "../../commons/messages.html" />
+
+            <#if stats??>
+                <div class="row mb-4">
+                    <div class="col-md-6 col-xl-3 mb-3">
+                        <div class="card" style="border-radius: 20px;">
+                            <div class="card-body p-4 text-center">
+                                <h1 class="fw-bold mb-2">${stats.totalAttempts}</h1>
+                                <p class="text-muted text-truncate mb-0">#i18n{module.wiki.quiz.dashboard.totalAttempts}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3 mb-3">
+                        <div class="card" style="border-radius: 20px;">
+                            <div class="card-body p-4 text-center">
+                                <h1 class="fw-bold mb-2">${stats.completedAttempts}</h1>
+                                <p class="text-muted text-truncate mb-0">#i18n{module.wiki.quiz.dashboard.completed}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3 mb-3">
+                        <div class="card" style="border-radius: 20px;">
+                            <div class="card-body p-4 text-center">
+                                <h1 class="fw-bold mb-2">${stats.passRate}%</h1>
+                                <p class="text-muted text-truncate mb-0">#i18n{module.wiki.quiz.dashboard.passRate}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3 mb-3">
+                        <div class="card" style="border-radius: 20px;">
+                            <div class="card-body p-4 text-center">
+                                <h1 class="fw-bold mb-2">${stats.avgScore}%</h1>
+                                <p class="text-muted text-truncate mb-0">#i18n{module.wiki.quiz.dashboard.avgScore}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </#if>
+
+            <#-- Search form -->
+            <form method="get" action="jsp/site/Portal.jsp" class="mb-4 d-flex justify-content-end">
+                <input type="hidden" name="page" value="quizdashboard">
+                <input type="hidden" name="view" value="quizStats">
+                <input type="hidden" name="quiz_id" value="${quiz.id}">
+                <div class="input-group" style="max-width: 400px;">
+                    <input type="text" class="form-control" name="search_user" value="${search_user!''}" placeholder="#i18n{module.wiki.quiz.dashboard.searchUser}">
+                    <button class="btn btn-dark" type="submit">
+                        <i class="ti ti-search"></i>
+                    </button>
+                    <#if search_user?has_content>
+                        <a href="jsp/site/Portal.jsp?page=quizdashboard&view=quizStats&quiz_id=${quiz.id}" class="btn btn-light" title="#i18n{wiki.action.reset}">
+                            <i class="ti ti-x"></i>
+                        </a>
+                    </#if>
+                </div>
+            </form>
+
+            <#if paginator?? && paginator.itemsCount gt 0>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>#i18n{module.wiki.quiz.dashboard.user}</th>
+                                <th>#i18n{module.wiki.quiz.dashboard.startedAt}</th>
+                                <th>#i18n{module.wiki.quiz.dashboard.completedAt}</th>
+                                <th class="text-center">#i18n{module.wiki.quiz.quiz.score}</th>
+                                <th class="text-center">#i18n{module.wiki.quiz.quiz.status}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <#list attempts as attempt>
+                                <tr>
+                                    <td><strong>${attempt.userGuid!'-'}</strong></td>
+                                    <td>${attempt.startedAt?string("dd/MM/yyyy HH:mm")}</td>
+                                    <td><#if attempt.completedAt??>${attempt.completedAt?string("dd/MM/yyyy HH:mm")}<#else>-</#if></td>
+                                    <td class="text-center"><#if attempt.score??>${attempt.score}%<#else>-</#if></td>
+                                    <td class="text-center">
+                                        <#if attempt.completed>
+                                            <#if attempt.passed>
+                                                <span class="badge text-success-emphasis bg-success-subtle border border-success-subtle">#i18n{module.wiki.quiz.quiz.passed}</span>
+                                            <#else>
+                                                <span class="badge text-danger-emphasis bg-danger-subtle border border-danger-subtle">#i18n{module.wiki.quiz.quiz.failed}</span>
+                                            </#if>
+                                        <#else>
+                                            <span class="badge text-warning-emphasis bg-warning-subtle border border-warning-subtle">#i18n{module.wiki.quiz.quiz.inProgress}</span>
+                                        </#if>
+                                    </td>
+                                    <td class="text-end">
+                                        <#if attempt.completed>
+                                            <a href="jsp/site/Portal.jsp?page=quiz&view=quizResults&attempt_id=${attempt.id}&from=stats&quiz_id=${quiz.id}" class="btn btn-sm btn-light" title="#i18n{module.wiki.quiz.dashboard.viewAttempt}">
+                                                <i class="ti ti-eye"></i>
+                                            </a>
+                                        </#if>
+                                    </td>
+                                </tr>
+                            </#list>
+                        </tbody>
+                    </table>
+                </div>
+
+                <#-- Pagination -->
+                <#if (paginator.pagesCount > 1)>
+                    <div class="d-flex justify-content-between align-items-center mt-4 mb-5">
+                        <div class="text-muted">
+                            ${paginator.labelItemCount} : ${paginator.itemsCount}
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <#if (paginator.pageCurrent > 1)>
+                                    <li class="page-item">
+                                        <a class="page-link" href="${paginator.firstPageLink?xhtml}">${paginator.labelFirst}</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="${paginator.previousPageLink?xhtml}">${paginator.labelPrevious}</a>
+                                    </li>
+                                </#if>
+                                <#list paginator.pagesLinks as pageLink>
+                                    <#if (pageLink.index == paginator.pageCurrent)>
+                                        <li class="page-item active">
+                                            <span class="page-link">${pageLink.name}</span>
+                                        </li>
+                                    <#else>
+                                        <li class="page-item">
+                                            <a class="page-link" href="${pageLink.url?xhtml}">${pageLink.name}</a>
+                                        </li>
+                                    </#if>
+                                </#list>
+                                <#if (paginator.pageCurrent < paginator.pagesCount)>
+                                    <li class="page-item">
+                                        <a class="page-link" href="${paginator.nextPageLink?xhtml}">${paginator.labelNext}</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="${paginator.lastPageLink?xhtml}">${paginator.labelLast}</a>
+                                    </li>
+                                </#if>
+                            </ul>
+                        </nav>
+                    </div>
+                </#if>
+            <#else>
+                <div class="alert alert-info" role="alert">
+                    #i18n{module.wiki.quiz.dashboard.noAttempts}
+                </div>
+            </#if>
+        </div>
+    </div>
+<#else>
+    <div class="container py-4">
+        <div class="alert alert-warning">
+            #i18n{module.wiki.quiz.quiz.selectBook}
+        </div>
+    </div>
+</#if>
+
+<#if is_module_ai_present?? && is_module_ai_present>
+    <#include "/skin/plugins/wiki/modules/ai/chat.html">
+</#if>
